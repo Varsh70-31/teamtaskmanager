@@ -5,7 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
-from django.urls import reverse
+from django.urls import resolve, reverse
 from django.utils import timezone
 
 from .forms import TaskForm
@@ -67,6 +67,11 @@ class ProjectsTests(TestCase):
         self.assertIn('Your task workspace', content)
         self.assertIn('Test Task', content)
 
+    def test_task_list_url_is_available_to_taskers(self):
+        match = resolve('/projects/tasks/')
+        self.assertEqual(match.url_name, 'task_list')
+        self.assertEqual(match.func, task_list)
+
     def test_home_redirects_admins_to_dashboard(self):
         request = self.factory.get(reverse('home'))
         request = self._setup_request(request, user=self.admin)
@@ -83,6 +88,11 @@ class ProjectsTests(TestCase):
         self.assertIn('Member project overview', content)
         self.assertIn('tasker', content)
         self.assertIn('Test Project', content)
+
+    def test_members_url_is_available_to_admins(self):
+        match = resolve('/projects/members/')
+        self.assertEqual(match.url_name, 'member_project_overview')
+        self.assertEqual(match.func, member_project_overview)
 
     def test_tasker_cannot_view_member_project_overview(self):
         request = self.factory.get(reverse('member_project_overview'))

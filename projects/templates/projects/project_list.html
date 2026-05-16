@@ -9,7 +9,7 @@
     </div>
     <div class="header-actions">
         {% if user.role == 'admin' %}
-            <a class="button button-primary" href="/projects/create/">Create Project</a>
+            <a class="button button-primary" href="{% url 'project_create' %}">Create Project</a>
         {% endif %}
     </div>
 </div>
@@ -23,7 +23,7 @@
     {% for project in projects %}
         <li>
             <div>
-                <a class="project-title" href="/projects/{{ project.pk }}/">{{ project.name }}</a>
+                <a class="project-title" href="{% url 'project_detail' project.pk %}">{{ project.name }}</a>
                 <p>{{ project.description|truncatechars:120 }}</p>
                 {% if project.total_tasks > 0 %}
                     <div class="task-status-bar">
@@ -47,7 +47,7 @@
             <div class="project-actions">
                 <span class="project-meta">Owner: {{ project.owner.username }}</span>
                 {% if user.role == 'admin' %}
-                    <a class="link-button" href="/projects/{{ project.pk }}/tasks/create/">Create Task</a>
+                    <a class="link-button" href="{% url 'task_create' project.pk %}">Create Task</a>
                 {% endif %}
             </div>
         </li>

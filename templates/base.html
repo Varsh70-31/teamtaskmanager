@@ -14,18 +14,18 @@
         <nav>
             {% if user.is_authenticated %}
                 {% if user.role == 'admin' %}
-                    <a href="/projects/">Dashboard</a>
-                    <a href="/projects/members/">Members</a>
+                    <a href="{% url 'dashboard' %}">Dashboard</a>
+                    <a href="{% url 'member_project_overview' %}">Members</a>
                 {% else %}
-                    <a href="/projects/tasks/">Tasks To Do</a>
+                    <a href="{% url 'task_list' %}">Tasks To Do</a>
                 {% endif %}
-                <a href="/projects/list/">Projects</a>
+                <a href="{% url 'project_list' %}">Projects</a>
                 <span class="nav-badge">{{ user.username }} | {{ user.role|title }}</span>
-                <a href="/accounts/logout/">Logout</a>
+                <a href="{% url 'logout' %}">Logout</a>
             {% else %}
-                <a href="/">Home</a>
-                <a href="/accounts/login/">Login</a>
-                <a href="/accounts/signup/">Signup</a>
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'signup' %}">Signup</a>
             {% endif %}
         </nav>
     </div>

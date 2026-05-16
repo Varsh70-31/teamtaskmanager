@@ -320,7 +320,9 @@ nav a:hover {
 .search-bar button {
     border-radius: 999px;
     border: none;
-    padding: 0 1.2rem;
+    min-height: 3.25rem;
+    padding: 0.95rem 1.5rem;
+    flex: 0 0 auto;
 }
 
 input,
@@ -1083,6 +1085,19 @@ textarea:focus {
     gap: 1rem;
 }
 
+.project-list.project-overview li > div:first-child {
+    min-width: 0;
+    flex: 1;
+}
+
+.project-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-width: max-content;
+}
+
 .project-title {
     font-weight: 700;
     font-size: 1.05rem;
@@ -1359,6 +1374,19 @@ textarea:focus {
         width: calc(100% - 1.5rem);
     }
 
+    body {
+        background: #09070f;
+    }
+
+    main.content {
+        padding-top: 1.5rem;
+    }
+
+    .site-header {
+        position: static;
+        padding: 1rem 0 0.9rem;
+    }
+
     .hero-section,
     .project-summary-grid,
     .dashboard-grid,
@@ -1371,15 +1399,56 @@ textarea:focus {
     }
 
     .site-header .container {
-        padding: 0 0.75rem;
+        padding: 0;
+        gap: 0.75rem;
+        text-align: left;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .brand {
+        flex: 0 0 auto;
+        font-size: 1.05rem;
+        line-height: 1.25;
+        max-width: 9.5rem;
     }
 
     nav {
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
         gap: 0.5rem;
+        min-width: 0;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        padding: 0.15rem 0 0.2rem;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    nav a,
+    .nav-badge {
+        flex: 0 0 auto;
+        justify-content: center;
+        min-height: 2.45rem;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .nav-badge {
+        margin: 0;
     }
 
     .button {
         width: 100%;
+        min-height: 3.25rem;
+        padding: 0.9rem 1.2rem;
     }
 
     .button-group {
@@ -1391,9 +1460,76 @@ textarea:focus {
         gap: 0.75rem;
     }
 
+    .page-header {
+        margin-bottom: 1.25rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.95rem;
+        line-height: 1.12;
+        margin: 0.5rem 0 0.85rem;
+    }
+
+    .intro-text {
+        line-height: 1.45;
+    }
+
+    .search-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-bar input[type="search"] {
+        min-width: 0;
+        min-height: 3.25rem;
+    }
+
+    .search-bar button {
+        width: 100%;
+    }
+
     .project-list li,
     .task-list li {
         padding: 1rem;
+        border-radius: 1rem;
+        min-height: 0;
+    }
+
+    .project-list.project-overview li {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .project-actions {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .project-meta,
+    .task-meta {
+        margin-top: 0;
+    }
+
+    .task-status-bar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    .status-bar-container {
+        width: 100%;
+    }
+
+    .status-label {
+        min-width: 0;
+        text-align: left;
+    }
+
+    .project-list.project-overview .link-button {
+        margin-top: 0;
     }
 
     .task-row {

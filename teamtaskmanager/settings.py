@@ -1,8 +1,8 @@
+import dj_database_url
 import os
 from pathlib import Path
 from urllib.parse import quote
 
-import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent

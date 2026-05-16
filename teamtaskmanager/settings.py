@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from urllib.parse import quote
 
@@ -10,6 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 IS_RAILWAY = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_PROJECT_ID'))
+COMMAND = sys.argv[1] if len(sys.argv) > 1 else ''
+ALLOW_SQLITE_ON_RAILWAY = COMMAND in {'collectstatic', 'check', 'shell', 'showmigrations'}
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-this-with-a-secure-secret')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False' if IS_RAILWAY else 'True').lower() in ('true', '1', 'yes')
@@ -76,7 +79,7 @@ if not database_url and all(os.getenv(key) for key in ['PGUSER', 'PGPASSWORD', '
         f"@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
     )
 
-if IS_RAILWAY and not database_url:
+if IS_RAILWAY and not database_url and not ALLOW_SQLITE_ON_RAILWAY:
     raise ImproperlyConfigured(
         'Railway deployment requires DATABASE_URL or the PGUSER/PGPASSWORD/PGHOST/PGPORT/PGDATABASE variables.'
     )

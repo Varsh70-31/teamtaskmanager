@@ -80,6 +80,8 @@ Railway will use `railway.json`:
 - Pre-deploy command: `python manage.py migrate --noinput`
 - Start command: `gunicorn teamtaskmanager.wsgi:application --bind 0.0.0.0:$PORT --log-file -`
 
+The build step can run before database variables are available. The app allows `collectstatic` to run in that case, but `migrate` and the web process still require PostgreSQL on Railway.
+
 Open the app service, click **Deploy**, and watch the deployment logs.
 
 ## 6. Create an admin user
@@ -95,6 +97,7 @@ You can also use the app signup flow. The first registered account becomes an ad
 ## Troubleshooting
 
 - If signup/login fails with `OperationalError: no such table: accounts_user`, the app is using an empty database or migrations did not run. Confirm the Django app service has `DATABASE_URL=${{Postgres.DATABASE_URL}}`, then redeploy so `python manage.py migrate --noinput` runs.
+- If `collectstatic` succeeds but `migrate` fails with `Railway deployment requires DATABASE_URL`, add PostgreSQL and set `DATABASE_URL=${{Postgres.DATABASE_URL}}` on the Django app service.
 - If CSS is missing, confirm the build ran `collectstatic` and that `whitenoise.middleware.WhiteNoiseMiddleware` is enabled.
 - If POST forms fail with CSRF errors, update `DJANGO_CSRF_TRUSTED_ORIGINS` to include the exact `https://...` Railway or custom domain.
 - If login or signup data disappears between deploys, confirm the app is using PostgreSQL through `DATABASE_URL`, not SQLite.

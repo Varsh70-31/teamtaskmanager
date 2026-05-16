@@ -77,9 +77,10 @@ if not database_url and all(os.getenv(key) for key in ['PGUSER', 'PGPASSWORD', '
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=database_url,
-        conn_max_age=600,
-    ) if database_url else default_database
+        # Fall back to your local SQLite if the DATABASE_URL environment variable isn't found
+        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}",
+        conn_max_age=600
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [

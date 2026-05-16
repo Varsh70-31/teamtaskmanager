@@ -1,91 +1,184 @@
 # Team Task Manager
 
-A professional Django-based project management app for teams.
+A Django-based team task management app for coordinating projects, assigning work, and tracking delivery progress.
 
 ## Features
 
-- User authentication (signup, login, logout)
-- Role-based user accounts: Admin / Member
-- Project creation, team membership, and role-based permissions
-- Task creation, assignment, status tracking, and overdue detection
-- Clean dashboard with search, filters, and task progress metrics
-- Responsive UI styled for a professional presentation
-- SQLite database for local development
-- REST-style JSON API endpoints for projects and task management
-- Deployment-ready for Railway via `Procfile`
+- Signup, login, logout, and custom user roles
+- Admin and tasker experiences with role-specific navigation
+- Admin dashboard with workload, schedule, status, and project metrics
+- Project creation, editing, membership, and ownership controls
+- Task creation, assignment, status updates, due dates, and time tracking
+- Tasker workspace for assigned tasks only
+- Member overview page for admins
+- Responsive dark UI with mobile-friendly navigation
+- REST-style JSON API for projects and tasks
+- Railway-ready deployment with Gunicorn, WhiteNoise, PostgreSQL, and config-as-code
 
-## Getting Started
+## Tech Stack
 
-1. Create and activate a virtual environment:
+- Python 3.12
+- Django 4.2
+- SQLite for local development
+- PostgreSQL for Railway production deployments
+- Gunicorn
+- WhiteNoise
+- Railway Railpack
+
+## Local Setup
+
+From the project root, the folder that contains `manage.py`:
+
+```powershell
+cd team-task-manager
+```
+
+Create and activate a virtual environment:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-2. Create a `.env` file from `.env.example` and set your secret key:
-
-```powershell
-copy .env.example .env
-```
-
-3. Install dependencies:
+Install dependencies:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-4. Run database migrations:
+Create a local `.env` file:
+
+```powershell
+copy .env.example .env
+```
+
+For local development, keep or set:
+
+```text
+DJANGO_DEBUG=True
+DJANGO_SECRET_KEY=replace-with-a-secure-local-key
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+Run migrations:
 
 ```powershell
 python manage.py migrate
 ```
 
-5. Collect static files:
-
-```powershell
-python manage.py collectstatic --noinput
-```
-
-6. Start the development server:
+Start the development server:
 
 ```powershell
 python manage.py runserver
 ```
 
-7. Open the site at `http://127.0.0.1:8000/`.
+Open:
 
-> The first registered account becomes an admin user automatically. Subsequent signups are created as members.
+```text
+http://127.0.0.1:8000/
+```
 
-## Deployment
+The first registered account becomes an admin automatically. Later signups become tasker accounts.
 
-This project includes a `Procfile` for Railway deployment and uses SQLite for the database.
+## Useful Commands
 
-### Railway setup
+Run checks:
 
-1. Create a Railway project and connect your GitHub repository.
-2. Add environment variables:
-   - `DJANGO_SECRET_KEY` — your production secret key
-   - `DJANGO_DEBUG` — `False`
-3. Railway will run the app using `Procfile`:
-   - `web: gunicorn teamtaskmanager.wsgi --log-file -`
-4. Make sure static files are collected in deployment.
+```powershell
+python manage.py check
+```
 
-See `DEPLOYMENT.md` for full deployment instructions.
+Run tests:
+
+```powershell
+python manage.py test
+```
+
+Collect static files:
+
+```powershell
+python manage.py collectstatic --noinput
+```
+
+Create a superuser:
+
+```powershell
+python manage.py createsuperuser
+```
+
+## Main Pages
+
+- `/` - home, redirects authenticated users to their role workspace
+- `/accounts/login/` - login
+- `/accounts/signup/` - signup
+- `/projects/` - admin dashboard
+- `/projects/list/` - project portfolio
+- `/projects/tasks/` - tasker task workspace
+- `/projects/members/` - admin member overview
+- `/projects/<id>/` - project detail
 
 ## API Endpoints
 
-- `GET /api/projects/` — list accessible projects
-- `POST /api/projects/` — create a project (admin only)
-- `GET /api/projects/<id>/` — project detail
-- `GET /api/projects/<id>/tasks/` — list tasks in a project
-- `POST /api/projects/<id>/tasks/` — create a task for a project
-- `GET /api/tasks/<id>/` — get task detail
-- `PUT /api/tasks/<id>/` — update a task
-- `PATCH /api/tasks/<id>/` — partially update a task
+- `GET /api/projects/` - list accessible projects
+- `POST /api/projects/` - create a project, admin only
+- `GET /api/projects/<id>/` - project detail
+- `GET /api/projects/<id>/tasks/` - list tasks in a project
+- `POST /api/projects/<id>/tasks/` - create a task in a project
+- `GET /api/tasks/<id>/` - task detail
+- `PUT /api/tasks/<id>/` - update a task
+- `PATCH /api/tasks/<id>/` - partially update a task
 
-## Next Steps
+## Environment Variables
 
-- Improve dashboard analytics with charts and progress visuals
-- Add email notifications for overdue and assigned tasks
-- Add role-specific team management pages
+Local variables are loaded from `.env`. Railway variables are configured in the Railway dashboard.
+
+```text
+DJANGO_SECRET_KEY=<secret-key>
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=.railway.app
+DJANGO_CSRF_TRUSTED_ORIGINS=https://your-app.up.railway.app
+DJANGO_SECURE_SSL_REDIRECT=False
+DJANGO_SESSION_COOKIE_SECURE=True
+DJANGO_CSRF_COOKIE_SECURE=True
+DJANGO_SECURE_HSTS_SECONDS=0
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+```
+
+`DATABASE_URL` is optional locally. If it is not set, the app uses SQLite at `db.sqlite3`.
+
+## Railway Deployment
+
+This repo includes:
+
+- `railway.json` for Railway build and deploy settings
+- `Procfile` as a compatible Gunicorn start command
+- `runtime.txt` for Python version selection
+- `DEPLOYMENT.md` with the full deployment walkthrough
+
+Railway deploy flow:
+
+1. Push this repository to GitHub.
+2. Create a Railway project.
+3. Deploy from the GitHub repo.
+4. Add a PostgreSQL service.
+5. Set the app environment variables.
+6. Generate a Railway domain.
+7. Update `DJANGO_CSRF_TRUSTED_ORIGINS` with the generated `https://...` domain.
+8. Redeploy.
+
+Railway uses `railway.json` to run:
+
+```bash
+python manage.py collectstatic --noinput
+python manage.py migrate --noinput
+gunicorn teamtaskmanager.wsgi:application --bind 0.0.0.0:$PORT --log-file -
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the detailed Railway guide.
+
+## Notes
+
+- The app is designed for role-based project management, not public anonymous project access.
+- Taskers only see tasks assigned to them.
+- Admin users manage projects, tasks, and member assignments.
+- Do not commit `.env`, `db.sqlite3`, or `staticfiles/`.

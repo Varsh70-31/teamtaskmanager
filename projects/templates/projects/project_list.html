@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Projects</p>
+        <h1>My project portfolio</h1>
+        <p class="intro-text">Review active work, open projects, and team ownership in one place.</p>
+    </div>
+    <div class="header-actions">
+        {% if user.role == 'admin' %}
+            <a class="button button-primary" href="/projects/create/">Create Project</a>
+        {% endif %}
+    </div>
+</div>
+
+<form method="get" class="search-bar">
+    <input type="search" name="q" placeholder="Search projects" value="{{ query }}">
+    <button type="submit" class="button button-secondary">Search</button>
+</form>
+
+<ul class="project-list project-overview">
+    {% for project in projects %}
+        <li>
+            <div>
+                <a class="project-title" href="/projects/{{ project.pk }}/">{{ project.name }}</a>
+                <p>{{ project.description|truncatechars:120 }}</p>
+                {% if project.total_tasks > 0 %}
+                    <div class="task-status-bar">
+                        <div class="status-bar-container">
+                            {% if project.todo_percent > 0 %}
+                                <div class="status-segment todo" style="width: {{ project.todo_percent }}%" title="To Do: {{ project.todo_count }}"></div>
+                            {% endif %}
+                            {% if project.in_progress_percent > 0 %}
+                                <div class="status-segment in_progress" style="width: {{ project.in_progress_percent }}%" title="In Progress: {{ project.in_progress_count }}"></div>
+                            {% endif %}
+                            {% if project.done_percent > 0 %}
+                                <div class="status-segment done" style="width: {{ project.done_percent }}%" title="Done: {{ project.done_count }}"></div>
+                            {% endif %}
+                        </div>
+                        <span class="status-label">{{ project.done_count }}/{{ project.total_tasks }} done</span>
+                    </div>
+                {% else %}
+                    <p class="no-tasks-text">No tasks yet</p>
+                {% endif %}
+            </div>
+            <div class="project-actions">
+                <span class="project-meta">Owner: {{ project.owner.username }}</span>
+                {% if user.role == 'admin' %}
+                    <a class="link-button" href="/projects/{{ project.pk }}/tasks/create/">Create Task</a>
+                {% endif %}
+            </div>
+        </li>
+    {% empty %}
+        <li>No projects match your search. Try a different keyword.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

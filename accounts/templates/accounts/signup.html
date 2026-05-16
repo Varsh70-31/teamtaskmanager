@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card">
+    <h2>Create your account</h2>
+    <p class="mb-4">Select the account type you want. Both Admin and Tasker accounts can now be created directly.</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="role" value="{{ form.role.value }}">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {{ form.email.label_tag }}
+        {{ form.email }}
+        {{ form.password1.label_tag }}
+        {{ form.password1 }}
+        {{ form.password2.label_tag }}
+        {{ form.password2 }}
+        <button type="submit" class="button button-primary">Sign Up</button>
+    </form>
+    <p class="mt-4">Already have an account? <a href="/accounts/login/">Log in</a></p>
+    <p class="mt-2">After signup, use the appropriate login type.</p>
+</div>
+{% endblock %}

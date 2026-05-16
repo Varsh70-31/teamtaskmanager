@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+*.log
+*.pot
+*.pyc
+.DS_Store
+venv/
+.env
+*.egg-info/
+staticfiles/
+node_modules/
+
+# Django
+*.log
+local_settings.py
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/

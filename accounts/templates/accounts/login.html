@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card">
+    <h2>Login to your account</h2>
+    <p class="mb-4">Select your account type and enter your credentials.</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="role" value="{{ form.role.value }}">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        <button type="submit" class="button button-primary">Login</button>
+    </form>
+    <p class="mt-4">Need an account? <a href="/accounts/signup/">Sign up</a></p>
+</div>
+{% endblock %}

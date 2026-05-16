@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">{{ project.name }}</p>
+        <h1>Project details</h1>
+        <p class="intro-text">Collaborators, status updates, and active tasks for this project.</p>
+        {% if user.role == 'tasker' %}
+            <p class="intro-text">You can view and update tasks assigned to you only.</p>
+        {% endif %}
+    </div>
+    <div class="header-actions">
+        {% if can_manage_project %}
+            <a class="button button-secondary" href="/projects/{{ project.pk }}/edit/">Edit Project</a>
+        {% endif %}
+        {% if can_create_task %}
+            <a class="button button-primary" href="/projects/{{ project.pk }}/tasks/create/">Add Task</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="project-summary-grid">
+    <div class="card">
+        <h2>About this project</h2>
+        <p>{{ project.description|default:'No description provided yet.' }}</p>
+    </div>
+    <div class="card small-card">
+        <h3>Owner</h3>
+        <p>{{ project.owner.username }}</p>
+        <h3>Team members</h3>
+        <ul class="member-list">
+            {% for member in project.members.all %}
+                <li>{{ member.username }}</li>
+            {% empty %}
+                <li>No additional members assigned.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<h2>Tasks</h2>
+<ul class="task-list task-board">
+    {% for task in tasks %}
+        <li>
+            <div class="task-header">
+                <strong>{{ task.title }}</strong>
+                <span class="tag {{ task.status }}">{{ task.get_status_display }}</span>
+            </div>
+            <p>{{ task.description|truncatechars:140 }}</p>
+            <p class="task-meta">Assigned to {% if task.assignee %}{{ task.assignee.username }}{% else %}Unassigned{% endif %} · Due {{ task.due_date|default:'N/A' }} · Duration {{ task.duration_display }}</p>
+            {% if task.progress_note %}
+                <p class="task-update-note">Latest update: {{ task.progress_note|linebreaksbr }}</p>
+            {% endif %}
+            {% if user == project.owner or user.role == 'admin' or user == task.assignee %}
+                <a href="/projects/tasks/{{ task.pk }}/edit/" class="link-button">Edit task</a>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>No tasks created for this project yet.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

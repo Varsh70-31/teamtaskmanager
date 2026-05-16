@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Task Manager</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container">
+        <a href="/" class="brand">Team Task Manager</a>
+        <nav>
+            {% if user.is_authenticated %}
+                {% if user.role == 'admin' %}
+                    <a href="/projects/">Dashboard</a>
+                    <a href="/projects/members/">Members</a>
+                {% else %}
+                    <a href="/projects/tasks/">Tasks To Do</a>
+                {% endif %}
+                <a href="/projects/list/">Projects</a>
+                <span class="nav-badge">{{ user.username }} | {{ user.role|title }}</span>
+                <a href="/accounts/logout/">Logout</a>
+            {% else %}
+                <a href="/">Home</a>
+                <a href="/accounts/login/">Login</a>
+                <a href="/accounts/signup/">Signup</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+
+<main class="content container">
+    {% if messages %}
+        <div class="message-banner" data-server-messages>
+            {% for message in messages %}
+                <div class="message {{ message.tags }}" data-message-tags="{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <p>&copy; {% now 'Y' %} Team Task Manager</p>
+    </div>
+</footer>
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+// Render Django messages as non-blocking notifications and auto-dismiss them.
+document.addEventListener('DOMContentLoaded', function () {
+    const toastContainer = document.getElementById('toast-container');
+    const serverMessages = document.querySelectorAll('.message');
+    
+    if (serverMessages.length) {
+        serverMessages.forEach(function (m) {
+            createToast(m.textContent.trim(), m.dataset.messageTags || '');
+            m.remove();
+        });
+    }
+
+    function createToast(text, classes) {
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + normalizeToastClass(classes);
+        toast.textContent = text;
+        toast.setAttribute('role', 'status');
+        toastContainer.appendChild(toast);
+
+        requestAnimationFrame(() => toast.classList.add('visible'));
+
+        const timeout = setTimeout(() => dismissToast(toast), 5000);
+
+        toast.addEventListener('click', () => {
+            clearTimeout(timeout);
+            dismissToast(toast);
+        });
+    }
+
+    function normalizeToastClass(classes) {
+        if (classes.includes('error')) return 'toast-error';
+        if (classes.includes('warning')) return 'toast-warning';
+        if (classes.includes('info')) return 'toast-info';
+        return 'toast-success';
+    }
+
+    function dismissToast(toast) {
+        toast.classList.remove('visible');
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }
+});
+</script>
+</body>
+</html>

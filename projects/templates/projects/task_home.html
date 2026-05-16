@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header dashboard-header">
+    <div>
+        <p class="eyebrow">Tasks</p>
+        <h1>Your task workspace</h1>
+        <p class="intro-text">See what needs attention, what is due soon, and the task list you can act on right now.</p>
+    </div>
+    <div class="header-actions">
+        <a class="button button-secondary" href="/projects/list/">View Projects</a>
+    </div>
+</div>
+
+<div class="dashboard-kpis task-kpis">
+    <div class="kpi-card">
+        <p class="stat-label">Total Tasks</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ task_counts.total }}</span>
+            <span class="kpi-trend">Across your accessible projects</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <p class="stat-label">In Progress</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ task_counts.in_progress }}</span>
+            <span class="kpi-trend">{{ task_counts.todo }} still waiting</span>
+        </div>
+    </div>
+    <div class="kpi-card warning">
+        <p class="stat-label">Due This Week</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ task_counts.due_this_week }}</span>
+            <span class="kpi-trend">{{ task_counts.overdue }} overdue</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <p class="stat-label">Completed</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ task_counts.done }}</span>
+            <span class="kpi-trend">Marked done</span>
+        </div>
+    </div>
+</div>
+
+<div class="filter-panel dashboard-filter">
+    <span>Task view:</span>
+    <a class="filter-pill {% if not status_filter %}active{% endif %}" href="/projects/tasks/">All</a>
+    <a class="filter-pill {% if status_filter == 'todo' %}active{% endif %}" href="/projects/tasks/?status=todo">To Do</a>
+    <a class="filter-pill {% if status_filter == 'in_progress' %}active{% endif %}" href="/projects/tasks/?status=in_progress">In Progress</a>
+    <a class="filter-pill {% if status_filter == 'done' %}active{% endif %}" href="/projects/tasks/?status=done">Done</a>
+</div>
+
+<div class="dashboard-grid">
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Active Task List</h2>
+                <p>Filtered by the selected task status.</p>
+            </div>
+        </div>
+        <ul class="compact-task-list">
+            {% for task in tasks %}
+                <li>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.project.name }} - {% if task.assignee %}{{ task.assignee.username }}{% else %}Unassigned{% endif %} - due {{ task.due_date|default:'N/A' }}</span>
+                    </div>
+                    <div class="task-actions">
+                        <span class="tag {{ task.status }}">{{ task.get_status_display }}</span>
+                        <a class="link-button" href="/projects/tasks/{{ task.pk }}/edit/">Edit</a>
+                    </div>
+                </li>
+            {% empty %}
+                <li>No tasks match this view.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Due Soon</h2>
+                <p>Open tasks due in the next 7 days.</p>
+            </div>
+        </div>
+        <ul class="compact-task-list">
+            {% for task in upcoming_tasks %}
+                <li>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.project.name }} - due {{ task.due_date }}</span>
+                    </div>
+                    <span class="tag {{ task.status }}">{{ task.get_status_display }}</span>
+                </li>
+            {% empty %}
+                <li>No upcoming deadlines this week.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Overdue</h2>
+                <p>Late tasks that need attention first.</p>
+            </div>
+        </div>
+        <ul class="compact-task-list">
+            {% for task in overdue_tasks %}
+                <li>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.project.name }} - due {{ task.due_date }}</span>
+                    </div>
+                    <span class="tag overdue">Overdue</span>
+                </li>
+            {% empty %}
+                <li>No overdue tasks right now.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}

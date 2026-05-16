@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card">
+    <h2>Sign in as</h2>
+    <p>Select the login type that matches your role.</p>
+    <div class="button-group">
+        <a class="button button-primary" href="/accounts/login/admin/">Admin Login</a>
+        <a class="button button-secondary" href="/accounts/login/tasker/">Tasker Login</a>
+    </div>
+    <p class="mt-3">Need a new account? <a href="/accounts/signup/">Sign up here</a></p>
+</div>
+{% endblock %}

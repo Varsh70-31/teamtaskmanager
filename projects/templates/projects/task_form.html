@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card form-page">
+    <h1>{{ title }}</h1>
+    <p class="intro-text">Project: {{ project.name }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-fields">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="button button-primary">Save Task</button>
+        <a href="/projects/{{ project.pk }}/" class="button button-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header dashboard-header">
+    <div>
+        <p class="eyebrow">Members</p>
+        <h1>Member project overview</h1>
+        <p class="intro-text">See which members are working on which projects, with their open and completed task counts at a glance.</p>
+    </div>
+    <div class="header-actions">
+        <a class="button button-secondary" href="/projects/">Dashboard</a>
+        <a class="button button-primary" href="/projects/list/">Projects</a>
+    </div>
+</div>
+
+<div class="member-overview-grid">
+    {% for row in member_rows %}
+        <section class="card member-overview-card">
+            <div class="section-heading">
+                <div>
+                    <h2>{{ row.member.username }}</h2>
+                    <p>{{ row.task_counts.open }} open tasks, {{ row.task_counts.done }} completed</p>
+                </div>
+                <span class="tag in_progress">{{ row.task_counts.total }} tasks</span>
+            </div>
+
+            <ul class="member-project-list">
+                {% for project_row in row.projects %}
+                    <li>
+                        <div>
+                            <a class="project-title" href="/projects/{{ project_row.project.pk }}/">{{ project_row.project.name }}</a>
+                            <span>{{ project_row.counts.total }} assigned tasks</span>
+                        </div>
+                        <div class="project-count-tags">
+                            <span class="tag todo">{{ project_row.counts.todo }} To Do</span>
+                            <span class="tag in_progress">{{ project_row.counts.in_progress }} Active</span>
+                            <span class="tag done">{{ project_row.counts.done }} Done</span>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li>
+                        <div>
+                            <strong>No projects assigned</strong>
+                            <span>This member is not currently attached to a project.</span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% empty %}
+        <section class="card">
+            <h2>No tasker members yet</h2>
+            <p>Create tasker accounts and assign them to projects to see the overview here.</p>
+        </section>
+    {% endfor %}
+</div>
+{% endblock %}

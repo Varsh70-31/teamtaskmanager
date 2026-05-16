@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header dashboard-header">
+    <div>
+        <p class="eyebrow">Dashboard</p>
+        <h1>Team operations overview</h1>
+        <p class="intro-text">Track delivery health, schedule pressure, workload, and project progress from one focused view.</p>
+    </div>
+    <div class="header-actions">
+        <a class="button button-secondary" href="/projects/list/">View Projects</a>
+        {% if user.role == 'admin' %}
+            <a class="button button-primary" href="/projects/create/">New Project</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="dashboard-kpis">
+    <div class="kpi-card">
+        <p class="stat-label">Completion</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ progress }}%</span>
+            <span class="kpi-trend">{{ summary.done }} of {{ summary.total }} done</span>
+        </div>
+        <div class="mini-progress" aria-hidden="true">
+            <span style="width: {{ progress }}%"></span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <p class="stat-label">Open Tasks</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ open_tasks }}</span>
+            <span class="kpi-trend">{{ summary.in_progress }} active, {{ summary.todo }} waiting</span>
+        </div>
+    </div>
+    <div class="kpi-card warning">
+        <p class="stat-label">Schedule Pressure</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ schedule_pressure }}</span>
+            <span class="kpi-trend">{{ summary.overdue }} overdue, {{ summary.due_this_week }} due soon</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <p class="stat-label">Hours Logged</p>
+        <div class="kpi-main">
+            <span class="stat-value">{{ summary.total_hours|default:0 }}</span>
+            <span class="kpi-trend">{{ summary.unassigned }} unassigned tasks</span>
+        </div>
+    </div>
+</div>
+
+<div class="filter-panel dashboard-filter">
+    <span>Active task view:</span>
+    <a class="filter-pill {% if not status_filter %}active{% endif %}" href="/projects/">All</a>
+    <a class="filter-pill {% if status_filter == 'todo' %}active{% endif %}" href="/projects/?status=todo">To Do</a>
+    <a class="filter-pill {% if status_filter == 'in_progress' %}active{% endif %}" href="/projects/?status=in_progress">In Progress</a>
+    <a class="filter-pill {% if status_filter == 'done' %}active{% endif %}" href="/projects/?status=done">Done</a>
+</div>
+
+<div class="dashboard-layout">
+    <section class="card chart-card">
+        <div class="section-heading">
+            <div>
+                <h2>Delivery Mix</h2>
+                <p>Status distribution across accessible work.</p>
+            </div>
+            <span class="tag done">{{ progress }}% complete</span>
+        </div>
+        <div class="data-visual">
+            <div class="stacked-bar" aria-label="Task status distribution">
+                {% for segment in status_segments %}
+                    <span class="bar-segment {{ segment.class_name }}" style="width: {{ segment.percent }}%" title="{{ segment.label }}: {{ segment.count }}"></span>
+                {% endfor %}
+            </div>
+            <ul class="metric-breakdown">
+                {% for segment in status_segments %}
+                    <li>
+                        <span><i class="legend-dot {{ segment.class_name }}"></i>{{ segment.label }}</span>
+                        <strong>{{ segment.count }} <small>{{ segment.percent }}%</small></strong>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    <section class="card chart-card">
+        <div class="section-heading">
+            <div>
+                <h2>Schedule Pressure</h2>
+                <p>What needs attention now versus later.</p>
+            </div>
+            <span class="tag overdue">{{ summary.overdue }} overdue</span>
+        </div>
+        <div class="data-visual">
+            <div class="stacked-bar" aria-label="Schedule pressure breakdown">
+                {% for segment in schedule_segments %}
+                    <span class="bar-segment {{ segment.class_name }}" style="width: {{ segment.percent }}%" title="{{ segment.label }}: {{ segment.count }}"></span>
+                {% endfor %}
+            </div>
+            <ul class="metric-breakdown">
+                {% for segment in schedule_segments %}
+                    <li>
+                        <span><i class="legend-dot {{ segment.class_name }}"></i>{{ segment.label }}</span>
+                        <strong>{{ segment.count }} <small>{{ segment.percent }}%</small></strong>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    <section class="card chart-card wide-panel">
+        <div class="section-heading">
+            <div>
+                <h2>Project Workload</h2>
+                <p>Top projects by task volume, split by status.</p>
+            </div>
+        </div>
+        <div class="project-bars">
+            {% for project in project_rows %}
+                <div class="project-bar-row">
+                    <div class="chart-row-label">
+                        <a class="project-title" href="/projects/{{ project.pk }}/">{{ project.name }}</a>
+                        <span>{{ project.task_count }} tasks</span>
+                    </div>
+                    <div class="stacked-bar">
+                        <span class="bar-segment todo" style="width: {{ project.todo_percent }}%" title="To Do: {{ project.todo_count }}"></span>
+                        <span class="bar-segment in-progress" style="width: {{ project.in_progress_percent }}%" title="In Progress: {{ project.in_progress_count }}"></span>
+                        <span class="bar-segment done" style="width: {{ project.done_percent }}%" title="Done: {{ project.done_count }}"></span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="empty-state">No project workload to show yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card chart-card">
+        <div class="section-heading">
+            <div>
+                <h2>Hours by Status</h2>
+                <p>Where recorded effort is going.</p>
+            </div>
+        </div>
+        <div class="bar-list">
+            {% for row in time_rows %}
+                <div class="bar-list-row">
+                    <div class="chart-row-label">
+                        <span>{{ row.label }}</span>
+                        <strong>{{ row.hours|floatformat:2 }}h</strong>
+                    </div>
+                    <div class="simple-bar">
+                        <span class="{{ row.class_name }}" style="width: {{ row.percent }}%"></span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card chart-card">
+        <div class="section-heading">
+            <div>
+                <h2>Workload by Person</h2>
+                <p>Open and overdue assignments.</p>
+            </div>
+        </div>
+        <div class="bar-list">
+            {% for row in workload_rows %}
+                <div class="bar-list-row">
+                    <div class="chart-row-label">
+                        <span>{{ row.label }}</span>
+                        <strong>{{ row.open_count }} open{% if row.overdue_count %}, {{ row.overdue_count }} overdue{% endif %}</strong>
+                    </div>
+                    <div class="simple-bar dual">
+                        <span class="todo" style="width: {{ row.open_percent }}%"></span>
+                        <span class="overdue" style="width: {{ row.overdue_percent }}%"></span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="empty-state">No assigned workload to show yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<div class="dashboard-grid">
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Project Health</h2>
+                <p>Completion and overdue risk by project.</p>
+            </div>
+        </div>
+        <ul class="health-list">
+            {% for project in project_rows %}
+                <li>
+                    <div class="health-row">
+                        <div>
+                            <a class="project-title" href="/projects/{{ project.pk }}/">{{ project.name }}</a>
+                            <span class="project-meta">{{ project.task_count }} tasks, {{ project.overdue_count }} overdue</span>
+                        </div>
+                        <strong>{{ project.completion }}%</strong>
+                    </div>
+                    <div class="mini-progress" aria-hidden="true">
+                        <span style="width: {{ project.completion }}%"></span>
+                    </div>
+                </li>
+            {% empty %}
+                <li>No project activity yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Upcoming Deadlines</h2>
+                <p>Open tasks due in the next 7 days.</p>
+            </div>
+        </div>
+        <ul class="compact-task-list">
+            {% for task in upcoming_tasks %}
+                <li>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.project.name }} - due {{ task.due_date }}</span>
+                    </div>
+                    <span class="tag {{ task.status }}">{{ task.get_status_display }}</span>
+                </li>
+            {% empty %}
+                <li>No upcoming deadlines this week.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Active Tasks</h2>
+                <p>Current task list based on the selected filter.</p>
+            </div>
+        </div>
+        <ul class="compact-task-list">
+            {% for task in tasks %}
+                <li>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.project.name }} - {% if task.assignee %}{{ task.assignee.username }}{% else %}Unassigned{% endif %}</span>
+                    </div>
+                    <span class="tag {{ task.status }}">{{ task.get_status_display }}</span>
+                </li>
+            {% empty %}
+                <li>No tasks match this filter.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Overdue Tasks</h2>
+                <p>Late open work that needs attention.</p>
+            </div>
+        </div>
+        <ul class="compact-task-list">
+            {% for task in overdue_tasks %}
+                <li>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <span>{{ task.project.name }} - due {{ task.due_date }}</span>
+                    </div>
+                    <span class="tag overdue">Overdue</span>
+                </li>
+            {% empty %}
+                <li>All open tasks are on schedule.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+
+{% endblock %}

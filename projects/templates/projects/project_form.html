@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-card form-page">
+    <h1>{{ title }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-fields">
+            {% for field in form %}
+                <p>
+                    {{ field.label_tag }}
+                    {% if field.name == 'members' %}
+                        <span class="multi-member-select" data-multi-select>
+                            {{ field }}
+                            <button type="button" class="multi-member-trigger" aria-expanded="false">
+                                <span data-selected-label>Select members</span>
+                                <span class="multi-member-caret" aria-hidden="true"></span>
+                            </button>
+                            <span class="multi-member-menu" role="listbox" aria-multiselectable="true"></span>
+                        </span>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {{ field.errors }}
+                    {% if field.help_text %}
+                        <span class="helptext">{{ field.help_text }}</span>
+                    {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+        <button type="submit" class="button button-primary">Save</button>
+        <a href="/projects/list/" class="button button-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-multi-select]').forEach(function (picker) {
+        const select = picker.querySelector('select[multiple]');
+        const trigger = picker.querySelector('.multi-member-trigger');
+        const label = picker.querySelector('[data-selected-label]');
+        const menu = picker.querySelector('.multi-member-menu');
+
+        if (!select || !trigger || !label || !menu) return;
+
+        select.classList.add('members-select-enhanced');
+
+        function selectedOptions() {
+            return Array.from(select.options).filter(function (option) {
+                return option.selected;
+            });
+        }
+
+        function updateLabel() {
+            const selected = selectedOptions();
+            if (!selected.length) {
+                label.textContent = 'Select members';
+                return;
+            }
+
+            if (selected.length <= 2) {
+                label.textContent = selected.map(function (option) {
+                    return option.text;
+                }).join(', ');
+                return;
+            }
+
+            label.textContent = selected.length + ' members selected';
+        }
+
+        function syncMenu() {
+            menu.querySelectorAll('.multi-member-option').forEach(function (button) {
+                const option = select.options[button.dataset.optionIndex];
+                const isSelected = Boolean(option && option.selected);
+                button.classList.toggle('selected', isSelected);
+                button.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+            });
+            updateLabel();
+        }
+
+        Array.from(select.options).forEach(function (option, index) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'multi-member-option';
+            button.dataset.optionIndex = index;
+            button.setAttribute('role', 'option');
+            button.textContent = option.text;
+            button.addEventListener('click', function () {
+                option.selected = !option.selected;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                syncMenu();
+            });
+            menu.appendChild(button);
+        });
+
+        trigger.addEventListener('click', function () {
+            const isOpen = picker.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        document.addEventListener('click', function (event) {
+            if (picker.contains(event.target)) return;
+            picker.classList.remove('open');
+            trigger.setAttribute('aria-expanded', 'false');
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            picker.classList.remove('open');
+            trigger.setAttribute('aria-expanded', 'false');
+        });
+
+        syncMenu();
+    });
+});
+</script>
+{% endblock %}

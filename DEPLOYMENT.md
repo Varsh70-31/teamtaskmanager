@@ -94,6 +94,7 @@ You can also use the app signup flow. The first registered account becomes an ad
 
 ## Troubleshooting
 
+- If signup/login fails with `OperationalError: no such table: accounts_user`, the app is using an empty database or migrations did not run. Confirm the Django app service has `DATABASE_URL=${{Postgres.DATABASE_URL}}`, then redeploy so `python manage.py migrate --noinput` runs.
 - If CSS is missing, confirm the build ran `collectstatic` and that `whitenoise.middleware.WhiteNoiseMiddleware` is enabled.
 - If POST forms fail with CSRF errors, update `DJANGO_CSRF_TRUSTED_ORIGINS` to include the exact `https://...` Railway or custom domain.
 - If login or signup data disappears between deploys, confirm the app is using PostgreSQL through `DATABASE_URL`, not SQLite.

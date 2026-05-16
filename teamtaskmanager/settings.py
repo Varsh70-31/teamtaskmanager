@@ -1,18 +1,24 @@
-import dj_database_url
 import os
 from pathlib import Path
 from urllib.parse import quote
 
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
+IS_RAILWAY = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_PROJECT_ID'))
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-this-with-a-secure-secret')
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False' if IS_RAILWAY else 'True').lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
+    for host in os.getenv(
+        'DJANGO_ALLOWED_HOSTS',
+        '.up.railway.app,.railway.app' if IS_RAILWAY else 'localhost,127.0.0.1',
+    ).split(',')
     if host.strip()
 ]
 CSRF_TRUSTED_ORIGINS = [
@@ -63,11 +69,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'teamtaskmanager.wsgi.application'
 
-default_database = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-}
-
 database_url = os.getenv('DATABASE_URL')
 if not database_url and all(os.getenv(key) for key in ['PGUSER', 'PGPASSWORD', 'PGHOST', 'PGPORT', 'PGDATABASE']):
     database_url = (
@@ -75,13 +76,22 @@ if not database_url and all(os.getenv(key) for key in ['PGUSER', 'PGPASSWORD', '
         f"@{os.getenv('PGHOST')}:{os.getenv('PGPORT')}/{os.getenv('PGDATABASE')}"
     )
 
-DATABASES = {
-    'default': dj_database_url.config(
-        # Fall back to your local SQLite if the DATABASE_URL environment variable isn't found
-        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}",
-        conn_max_age=600
+if IS_RAILWAY and not database_url:
+    raise ImproperlyConfigured(
+        'Railway deployment requires DATABASE_URL or the PGUSER/PGPASSWORD/PGHOST/PGPORT/PGDATABASE variables.'
     )
-}
+
+if database_url:
+    DATABASES = {
+        'default': dj_database_url.parse(database_url, conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

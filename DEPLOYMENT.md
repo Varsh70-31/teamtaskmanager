@@ -1,65 +1,106 @@
 # Railway Deployment Guide
 
-This document outlines the steps to deploy the `team-task-manager` Django app to Railway.
+This Django app is configured for Railway with:
 
-## Pre-requisites
+- `railway.json` for build, pre-deploy, start, healthcheck, and restart settings
+- Gunicorn as the production web server
+- WhiteNoise for static files
+- PostgreSQL through `DATABASE_URL`
 
-- A Railway account
-- GitHub repository linked to the Railway project
-- Your project code pushed to GitHub
+## 1. Push the repo to GitHub
 
-## Railway configuration
-
-1. Create a new Railway project and connect your GitHub repository.
-2. In Railway, add the following environment variables:
-   - `DJANGO_SECRET_KEY` — a secure random string
-   - `DJANGO_DEBUG` — `False`
-3. Make sure the deployment command is set by the `Procfile`:
-   - `web: gunicorn teamtaskmanager.wsgi --log-file -`
-
-## Local environment setup
-
-1. Copy environment example to `.env`:
+Commit your local changes and push them to GitHub.
 
 ```powershell
-copy .env.example .env
+git add .
+git commit -m "Prepare Railway deployment"
+git push
 ```
 
-2. Install dependencies:
+## 2. Create the Railway project
 
-```powershell
-pip install -r requirements.txt
+1. Go to https://railway.com/.
+2. Create a new project.
+3. Choose **Deploy from GitHub repo**.
+4. Select this repository.
+5. If Railway asks for the root directory, use the folder that contains `manage.py`.
+
+Railway detects Python/Django projects and builds them with Railpack.
+
+## 3. Add PostgreSQL
+
+In the Railway project canvas:
+
+1. Click **Create**.
+2. Choose **Database**.
+3. Select **PostgreSQL**.
+
+Then add this variable to the app service:
+
+```text
+DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
-3. Run the database migrations:
+## 4. Set app variables
 
-```powershell
-python manage.py migrate
+Add these variables to the Django app service:
+
+```text
+DJANGO_DEBUG=False
+DJANGO_SECRET_KEY=<generate-a-long-random-secret>
+DJANGO_ALLOWED_HOSTS=.railway.app
+DJANGO_CSRF_TRUSTED_ORIGINS=https://<your-generated-domain>
+DJANGO_SESSION_COOKIE_SECURE=True
+DJANGO_CSRF_COOKIE_SECURE=True
+DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
-4. Collect static files:
+After Railway generates a public domain, replace `<your-generated-domain>` with the full domain, for example:
 
-```powershell
-python manage.py collectstatic --noinput
+```text
+DJANGO_CSRF_TRUSTED_ORIGINS=https://team-task-manager-production.up.railway.app
 ```
 
-## Important Railway notes
+If you add a custom domain later, add it to both `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS`.
 
-- Railway will use SQLite by default because the app is configured for SQLite.
-- If you want a production database, configure a PostgreSQL plugin and update `DATABASES`.
-- Ensure `DJANGO_SECRET_KEY` is not committed to GitHub.
+Optional hardening after the Railway domain is confirmed:
 
-## Verifying deployment
+```text
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SECURE_HSTS_SECONDS=3600
+```
 
-After Railway deploys successfully, open the live URL provided by Railway and verify:
+Only increase HSTS once you are confident HTTPS works for every domain you serve.
 
-- Signup and login work
-- Dashboard loads
-- Project and task pages are accessible
-- The site serves static styles correctly
+## 5. Deploy
+
+Railway will use `railway.json`:
+
+- Build command: `python manage.py collectstatic --noinput`
+- Pre-deploy command: `python manage.py migrate --noinput`
+- Start command: `gunicorn teamtaskmanager.wsgi:application --bind 0.0.0.0:$PORT --log-file -`
+
+Open the app service, click **Deploy**, and watch the deployment logs.
+
+## 6. Create an admin user
+
+After the app deploys, open a Railway shell for the app service and run:
+
+```bash
+python manage.py createsuperuser
+```
+
+You can also use the app signup flow. The first registered account becomes an admin.
 
 ## Troubleshooting
 
-- If static files fail, verify `STATICFILES_STORAGE` is set to `whitenoise.storage.CompressedManifestStaticFilesStorage`.
-- If `DJANGO_DEBUG` is false and you see errors, check the Railway logs for details.
-- Use `railway logs` or the Railway dashboard to inspect deployment errors.
+- If CSS is missing, confirm the build ran `collectstatic` and that `whitenoise.middleware.WhiteNoiseMiddleware` is enabled.
+- If POST forms fail with CSRF errors, update `DJANGO_CSRF_TRUSTED_ORIGINS` to include the exact `https://...` Railway or custom domain.
+- If login or signup data disappears between deploys, confirm the app is using PostgreSQL through `DATABASE_URL`, not SQLite.
+- If the app crashes on boot, check Railway logs for missing environment variables or failed migrations.
+
+References:
+
+- Railway Django guide: https://docs.railway.com/guides/django
+- Railway config-as-code reference: https://docs.railway.com/config-as-code/reference
+- Railway CLI deploy docs: https://docs.railway.com/cli/deploying

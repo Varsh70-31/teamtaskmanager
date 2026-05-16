@@ -1,1 +1,1 @@
-web: gunicorn teamtaskmanager.wsgi --log-file -
+web: gunicorn teamtaskmanager.wsgi:application --bind 0.0.0.0:$PORT --log-file -
